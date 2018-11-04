@@ -90,8 +90,12 @@ class Scanner():
     def to_occurence_list(self, d):
         items = []
         for k, imgs in d.items():
-            if k.startswith('r:'):
+            if type(k) == bytes:
+                k = k.decode('utf-8')
+            elif k.startswith('r:'):
                 k = k[2:]
+            else:
+                k = str(k)
 
             for i, img in enumerate(imgs):
                 container_id = str("%s" % k)
@@ -102,7 +106,7 @@ class Scanner():
                               'img_filename': filename})
         return items
 
-    def scan(self, n=5, interval=0.1, data=None):
+    def scan(self, n=10, interval=0.1, data=None):
         if interval < 0.1:
             interval = 0.1
 
@@ -116,7 +120,13 @@ class Scanner():
             decoded = {}
             img = Image.open('./temp/opencv.png')
             for (x, img) in d:
-                k = str(x.data)
+                k = x.data
+                if type(k) == bytes:
+                    k = k.decode('utf-8')
+                elif k.startswith('r:'):
+                    k = k[2:]
+                else:
+                    k = str(k)
                 if k not in decoded:
                     decoded[k] = [img]
                 else:
@@ -128,8 +138,7 @@ class Scanner():
 
     def pretty_print(self, data):
         for t in data:
-            print("CONTAINER> %s | OCCURRENCE> %03d" %
-                  (t['container_id'], t['occurrence']))
+            print("CONTAINER> %s" % t)
 
 
 if __name__ == "__main__":
