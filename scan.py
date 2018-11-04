@@ -27,7 +27,7 @@ class Scanner():
         img = Image.open('./temp/opencv.png')
         d = decode(img)
         opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        to_crop = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        to_crop = deepcopy(opencvImage)
 
         def offset_and_validate_br_tl(offset, br, tl, max_x, max_y):
             tl[0] -= offset
@@ -49,6 +49,7 @@ class Scanner():
 
         result = []
         for x in d:
+            current_to_crop = deepcopy(to_crop)
             left, top, width, height = x.rect
             tl = [left, top]
             br = [tl[0] + width, tl[1] + height]
@@ -67,12 +68,14 @@ class Scanner():
             br = [tl[0] + width, tl[1] + height]
             br, tl = offset_and_validate_br_tl(10, br, tl, max_x, max_y)
 
-            cv2.rectangle(to_crop, tuple(tl), tuple(br), (0, 200, 200), 3)
-            cropped_img = cv2.cvtColor(to_crop[t:b, l:r], cv2.COLOR_BGR2RGB)
+            cv2.rectangle(current_to_crop, tuple(
+                tl), tuple(br), (200, 200, 0), 3)
+            cropped_img = cv2.cvtColor(
+                current_to_crop[t:b, l:r], cv2.COLOR_BGR2RGB)
             result.append((x, cropped_img))
 
         cv2.imshow("1", opencvImage)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
         # debug
         return result
 

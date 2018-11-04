@@ -3,6 +3,7 @@ import cv2
 import cloudinary.uploader as upl
 import requests
 import os
+import numpy
 from sys import argv
 
 from .scan import Scanner
@@ -13,13 +14,13 @@ def send_image(url, data):
     post_data = {}
     for d in data:
         item_id = d['container_id']
-        filename = d['filename']
+        filename = d['img_filename']
         if item_id in post_data:
             continue
         response = upl.upload(open(filename, 'rb'))
         image_url = response['url']
         post_data[item_id] = {'image_url': image_url}
-    requests.post(url, json=post_data)
+    requests.post(url+"/1", json=post_data)
 
 
 def main():
@@ -34,16 +35,23 @@ def main():
         result = scanner.scan(10, 0.05, data=result)
         scanner.pretty_print(result)
         print("Done! Press 'c' to close the door")
-        key = cv2.waitKey(0)
+        key = cv2.waitKey(1000)
         if key == ord('c'):
             print('Door closed!')
             break
     data = scanner.to_occurence_list(result)
 
     if 'GELAFRIDGE_URL' in os.environ:
+        print("Sending data to server")
         url = os.environ['GELAFRIDGE_URL']
         send_image(url, data)
 
 
+first_run = False
 while(True):
-    main()
+    cv2.imshow("1", numpy.array([[0, 0, 0], [0, 0, 0]]))
+    print("Press 'o' to open the door")
+    key = cv2.waitKey(0)
+    if key == ord('o'):
+        print('Door opened!')
+        main()
