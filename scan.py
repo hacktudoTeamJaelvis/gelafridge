@@ -2,12 +2,10 @@ import cv2
 import os
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 
 from PIL import Image
 from pyzbar.pyzbar import decode
 from copy import deepcopy
-from base64 import b64encode
 
 
 class Scanner():
