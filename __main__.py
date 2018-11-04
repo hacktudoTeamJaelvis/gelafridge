@@ -4,6 +4,7 @@ import cloudinary.uploader as upl
 import requests
 import os
 import numpy
+import json
 from sys import argv
 
 from .scan import Scanner
@@ -11,16 +12,17 @@ from .scan import Scanner
 
 # need to export the api key!
 def send_image(url, data):
-    post_data = {}
+    put_data = {}
     for d in data:
         item_id = d['container_id']
         filename = d['img_filename']
-        if item_id in post_data:
+        if item_id in put_data:
             continue
         response = upl.upload(open(filename, 'rb'))
         image_url = response['url']
-        post_data[item_id] = {'image_url': image_url}
-    requests.post(url+"/1", json=post_data)
+        put_data[item_id] = {'image_url': image_url}
+    headers = {"Content-Type": "application/json"}
+    requests.put(url+"/shelves/1", json=json.dumps(put_data), headers=headers)
 
 
 def main():
