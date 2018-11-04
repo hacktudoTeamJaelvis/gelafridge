@@ -1,11 +1,13 @@
-import time
 import cv2
 import os
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+
 from PIL import Image
 from pyzbar.pyzbar import decode
 from copy import deepcopy
-import numpy as np
-import matplotlib.pyplot as plt
+from base64 import b64encode
 
 
 class Scanner():
@@ -47,7 +49,6 @@ class Scanner():
 
             return br, tl
 
-
         result = []
         for x in d:
             left, top, width, height = x.rect
@@ -69,9 +70,8 @@ class Scanner():
             br, tl = offset_and_validate_br_tl(10, br, tl, max_x, max_y)
 
             cv2.rectangle(to_crop, tuple(tl), tuple(br), (0, 200, 200), 3)
-            cropped_img = cv2.cvtColor(to_crop[t:b, l:r], cv2.COLOR_BGR2RGB
+            cropped_img = cv2.cvtColor(to_crop[t:b, l:r], cv2.COLOR_BGR2RGB)
             result.append((x, cropped_img))
-
 
         cv2.imshow("1", opencvImage)
         cv2.waitKey(0)
@@ -91,21 +91,27 @@ class Scanner():
 
     def to_occurence_list(self, d):
         items = []
-        for k, count in d.items():
+        for k, imgs in d.items():
             if k.startswith('r:'):
                 k = k[2:]
 
-            for i in range(count):
-                container_id = str("%s:%03d" % (k, i))
-                item_id = str(k)
-                items.append([container_id, item_id])
+            for i, img in enumerate(imgs):
+                container_id = str("%s" % k)
+                item_id = i
+                filename = "%s_%d.jpg" % (container_id, item_id)
+                cv2.imwrite(filename, img, [int(cv2.IMWRITE_JPEG_QUALITY), 75])
+                items.append({'container_id': container_id, 'occurrence': item_id,
+                              'img_filename': filename})
         return items
 
-    def scan(self, n=5, interval=0.1):
+    def scan(self, n=5, interval=0.1, data=None):
         if interval < 0.1:
             interval = 0.1
 
-        decoded = {}
+        if data is None:
+            decoded = {}
+        else:
+            decoded = data
         for _ in range(n):
             prev_decoded = decoded
             d = self.do_scan(interval)
@@ -120,11 +126,12 @@ class Scanner():
 
             decoded = self.merge(prev_decoded, decoded)
 
-        return self.to_occurence_list(decoded)
+        return decoded
 
     def pretty_print(self, data):
         for t in data:
-            print("CONTAINER> %s | ITEM> %s" % (t[0], t[1]))
+            print("CONTAINER> %s | OCCURRENCE> %03d" %
+                  (t['container_id'], t['occurrence']))
 
 
 if __name__ == "__main__":
